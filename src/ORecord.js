@@ -1,3 +1,14 @@
+exports.allRequiredImpl = function (keys) {
+  return function (r) {
+    var o = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      o[key] = r[key];
+    }
+    return o;
+  };
+};
+
 exports.toORecordImpl = function (unMaybe) {
   return function (optKeys) {
     return function (r) {
@@ -18,8 +29,25 @@ exports.toORecordImpl = function (unMaybe) {
   };
 };
 
-exports.fromORecord = function (r) {
-  return r;
+exports.fromORecordImpl = function (nothing) {
+  return function (just) {
+    return function (optKeys) {
+      return function (o) {
+        var r = Object.assign({}, o);
+        for (var i = 0; i < optKeys.length; i++) {
+          var key = optKeys[i];
+          var undefOrValue = o[key];
+
+          if (typeof undefOrValue !== "undefined") {
+            r[key] = just(undefOrValue);
+          } else {
+            r[key] = nothing;
+          }
+        }
+        return r;
+      };
+    };
+  };
 };
 
 exports.undefined = undefined;

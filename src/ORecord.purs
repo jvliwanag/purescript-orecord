@@ -1,31 +1,40 @@
 module ORecord
        ( ORecord
-       , mkORecord
+       , orecord
        , class ToORecord
        , class ToORecordRL
        , toORecord
        , fromORecord
        , class RowKeys
-       , rowKeys
+       , _rowKeys
        , class RowKeysRL
-       , rowKeysRL
+       , _rowKeysRL
+       , class MapMaybe
+       , class MapMaybeRL
        ) where
 
 import Prelude
 
 import Data.List (List)
 import Data.List as List
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
 import Prim.Row (class Union)
 import Prim.RowList (class RowToList, Cons, Nil, kind RowList)
 import Type.Data.Row (RProxy(..))
 import Type.Data.RowList (RLProxy(..))
+import Type.Prelude (class ListToRow)
 import Unsafe.Coerce (unsafeCoerce)
 
 foreign import data ORecord :: # Type -> # Type -> Type
 
-type OptionalKeys = List String
+orecord :: forall g required optional o o'. Union required o g => Union o o' optional =>  { |g } -> ORecord required optional
+orecord = unsafeCoerce
+
+allRequired :: forall required optional. RowKeys required => ORecord required optional -> { |required }
+allRequired = allRequiredImpl (rowKeys (RProxy :: _ required))
+
+foreign import allRequiredImpl :: forall r o. Array String -> ORecord r o -> { |r }
 
 class ToORecord
       (r :: # Type)
@@ -63,33 +72,59 @@ toORecord
     => RowKeys optional
     => { |r }
     -> ORecord required optional
-toORecord = toORecordImpl (fromMaybe undefined) (List.toUnfoldable (rowKeys (RProxy :: _ optional)))
-
-foreign import fromORecord :: forall r required optional. ToORecord r required optional => ORecord required optional -> { |r }
-
-mkORecord :: forall g required optional o o'. Union required o g => Union o o' optional =>  { |g } -> ORecord required optional
-mkORecord = unsafeCoerce
+toORecord = toORecordImpl (fromMaybe undefined) (rowKeys (RProxy :: _ optional))
 
 foreign import toORecordImpl :: forall a a' r required optional. (Maybe a -> a') -> Array String -> { |r } -> ORecord required optional
 
+class MapMaybe (inr :: # Type) (outr :: # Type) | inr -> outr, outr -> inr
+
+instance mapMaybeInstance ::
+  ( RowToList inr inRl
+  , ListToRow outRl outr
+  , MapMaybeRL inRl outRl
+  ) => MapMaybe inr outr
+
+class MapMaybeRL
+      (inRl :: RowList)
+      (outRl :: RowList)
+      | inRl -> outRl, outRl -> inRl
+
+instance mapMaybeRLNil :: MapMaybeRL Nil Nil
+instance mapMaybeRLCons :: MapMaybeRL tl tl' => MapMaybeRL (Cons k t tl) (Cons k (Maybe t) tl')
+
+fromORecord ::
+  forall required optional maybes r
+  . MapMaybe optional maybes
+  => Union required maybes r
+  => RowKeys optional
+  => ORecord required optional
+  -> { |r }
+fromORecord =
+  fromORecordImpl Nothing Just (rowKeys (RProxy :: _ optional))
+
+foreign import fromORecordImpl :: forall required optional r. (forall a. Maybe a) -> (forall a. a -> Maybe a) -> Array String -> ORecord required optional -> { |r }
+
 foreign import undefined :: forall a. a
 
-class RowKeys (r :: # Type) where
-  rowKeys :: RProxy r -> List String
+rowKeys :: forall r. RowKeys r => RProxy r -> Array String
+rowKeys = List.toUnfoldable <<< _rowKeys
 
-instance rowKeysInstance :: ( RowToList r rl
+class RowKeys (r :: # Type) where
+  _rowKeys :: RProxy r -> List String
+
+instance _rowKeysInstance :: ( RowToList r rl
                             , RowKeysRL rl
                             ) => RowKeys r where
-  rowKeys _ = rowKeysRL (RLProxy :: _ rl)
+  _rowKeys _ = _rowKeysRL (RLProxy :: _ rl)
 
 class RowKeysRL (rl :: RowList) where
-  rowKeysRL :: RLProxy rl -> List String
+  _rowKeysRL :: RLProxy rl -> List String
 
-instance rowKeysRLNil :: RowKeysRL Nil where
-  rowKeysRL _ = mempty
+instance _rowKeysRLNil :: RowKeysRL Nil where
+  _rowKeysRL _ = mempty
 
-instance rowKeysRLCons ::
+instance _rowKeysRLCons ::
   ( IsSymbol name
   , RowKeysRL tl
   ) => RowKeysRL (Cons name typ tl) where
-  rowKeysRL _ = List.Cons (reflectSymbol (SProxy :: _ name)) (rowKeysRL (RLProxy :: _ tl))
+  _rowKeysRL _ = List.Cons (reflectSymbol (SProxy :: _ name)) (_rowKeysRL (RLProxy :: _ tl))

@@ -5,7 +5,16 @@ You can edit this file as you like.
 { name =
     "orecord"
 , dependencies =
-    [ "lists", "maybe", "effect", "proxy", "unsafe-coerce", "console", "psci-support", "debug" ]
+    [ "console"
+    , "debug"
+    , "effect"
+    , "lists"
+    , "maybe"
+    , "proxy"
+    , "psci-support"
+    , "typelevel-prelude"
+    , "unsafe-coerce"
+    ]
 , packages =
     ./packages.dhall
 , sources =
