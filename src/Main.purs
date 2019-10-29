@@ -19,6 +19,10 @@ main = do
 bar :: ORecord (x :: Int, a :: Boolean) (z :: String, b :: Int)
 bar = toORecord { x: 10, z: Just "Foo", a: false, b: Nothing }
 
+bar3 :: ORecord (x :: Int, a :: Boolean) (z :: String, b :: Int)
+--bar3 :: forall r. ORecord (a :: Boolean | r)
+bar3 = toORecord { x: 10, z: (Nothing :: Maybe String), a: false, b: (Nothing :: Maybe Int) }
+
 bar2 :: ORecord (x :: Int, a :: Boolean) (z :: String, b :: Int)
 bar2 = orecord { x: 10, z: "Foo", a: false }
 

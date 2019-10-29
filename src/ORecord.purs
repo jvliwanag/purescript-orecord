@@ -19,7 +19,7 @@ import Data.List (List)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
-import Prim.Row (class Union)
+import Prim.Row (class Nub, class Union)
 import Prim.RowList (class RowToList, Cons, Nil, kind RowList)
 import Type.Data.Row (RProxy(..))
 import Type.Data.RowList (RLProxy(..))
@@ -28,7 +28,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 foreign import data ORecord :: # Type -> # Type -> Type
 
-orecord :: forall g required optional o o'. Union required o g => Union o o' optional =>  { |g } -> ORecord required optional
+orecord :: forall g required optional o o'. Union required o g => Union o o' optional => Nub g g => { |g } -> ORecord required optional
 orecord = unsafeCoerce
 
 allRequired :: forall required optional. RowKeys required => ORecord required optional -> { |required }
@@ -40,7 +40,7 @@ class ToORecord
       (r :: # Type)
       (required :: # Type)
       (optional :: # Type)
-      | r -> required optional, required optional -> r
+      | r -> required optional
 
 instance toORecordInstance ::
   ( RowToList r rl
@@ -53,7 +53,7 @@ class ToORecordRL
       (rl :: RowList)
       (requiredRl :: RowList)
       (optionalRl :: RowList)
-      | rl -> requiredRl optionalRl, requiredRl optionalRl -> rl
+      | rl -> requiredRl optionalRl
 
 instance toORecordRLNil :: ToORecordRL Nil Nil Nil
 
@@ -80,8 +80,8 @@ class MapMaybe (inr :: # Type) (outr :: # Type) | inr -> outr, outr -> inr
 
 instance mapMaybeInstance ::
   ( RowToList inr inRl
-  , ListToRow outRl outr
   , MapMaybeRL inRl outRl
+  , ListToRow outRl outr
   ) => MapMaybe inr outr
 
 class MapMaybeRL
