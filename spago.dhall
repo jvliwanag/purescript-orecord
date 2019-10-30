@@ -5,15 +5,17 @@ You can edit this file as you like.
 { name =
     "orecord"
 , dependencies =
-    [ "console"
-    , "debug"
-    , "effect"
-    , "lists"
+    [ "lists"
     , "maybe"
     , "proxy"
-    , "psci-support"
     , "typelevel-prelude"
     , "unsafe-coerce"
+    -- Dev Dependencies
+    , "assert"
+    , "console"
+    , "debug"
+    , "effect"
+    , "psci-support"
     ]
 , packages =
     ./packages.dhall

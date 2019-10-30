@@ -125,7 +125,7 @@ getRequired sp r = getRequiredImpl (reflectSymbol sp) r
 
 foreign import getRequiredImpl :: forall a required optional. String -> ORecord required optional -> a
 
-getOptional :: forall l a r' required optional. IsSymbol l => Row.Cons l a r' required => SProxy l -> ORecord required optional -> Maybe a
+getOptional :: forall l a r' required optional. IsSymbol l => Row.Cons l a r' optional => SProxy l -> ORecord required optional -> Maybe a
 getOptional sp r = getOptionalImpl Nothing Just (reflectSymbol sp) r
 
 foreign import getOptionalImpl :: forall a required optional. Maybe a -> (a -> Maybe a) -> String -> ORecord required optional -> Maybe a
@@ -133,7 +133,7 @@ foreign import getOptionalImpl :: forall a required optional. Maybe a -> (a -> M
 setRequired :: forall l a r' required optional. IsSymbol l => Row.Cons l a r' required => SProxy l -> a -> ORecord required optional -> ORecord required optional
 setRequired sp a r = setImpl (reflectSymbol sp) a r
 
-setOptional :: forall l a r' required optional. IsSymbol l => Row.Cons l a r' required => SProxy l -> Maybe a -> ORecord required optional -> ORecord required optional
+setOptional :: forall l a r' required optional. IsSymbol l => Row.Cons l a r' optional => SProxy l -> Maybe a -> ORecord required optional -> ORecord required optional
 setOptional sp (Just a) r = setImpl (reflectSymbol sp) a r
 setOptional sp Nothing r = deleteImpl (reflectSymbol sp) r
 
