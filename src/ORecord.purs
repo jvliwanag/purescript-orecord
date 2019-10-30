@@ -1,12 +1,11 @@
 module ORecord
        ( ORecord
        , orecord
-       , class ToORecord
-       , class ToORecordRL
+       , class ORecordMapping
        , toORecord
+       , fromORecord
        , class MapMaybe
        , class MapMaybeRL
-       , fromORecord
        , allRequired
        , allOptional
        -- Accessors
@@ -40,43 +39,27 @@ foreign import data ORecord :: # Type -> # Type -> Type
 orecord :: forall g required optional o o'. Union required o g => Union o o' optional => Nub g g => { |g } -> ORecord required optional
 orecord = unsafeCoerce
 
-class ToORecord
-      (r :: # Type)
+instance orecordEq ::
+  ( ORecordMapping required optional r
+  , Eq {|r}
+  ) => Eq (ORecord required optional) where
+  eq a a' = (fromORecord a :: {|r}) == fromORecord a'
+
+class ORecordMapping
       (required :: # Type)
       (optional :: # Type)
-      | r -> required optional
+      (r :: # Type)
+      | r -> required optional, required optional -> r where
+  toORecord :: { |r } -> ORecord required optional
+  fromORecord :: ORecord required optional -> { |r }
 
-instance toORecordInstance ::
-  ( RowToList r rl
-  , ToORecordRL rl requiredRl optionalRl
-  , RowToList required requiredRl
-  , RowToList optional optionalRl
-  ) => ToORecord r required optional
-
-class ToORecordRL
-      (rl :: RowList)
-      (requiredRl :: RowList)
-      (optionalRl :: RowList)
-      | rl -> requiredRl optionalRl
-
-instance toORecordRLNil :: ToORecordRL Nil Nil Nil
-
-else instance toORecordRLConsOptional ::
-  ( ToORecordRL tailRl requiredRl optionalTailRl
-  , IsSymbol name
-  ) => ToORecordRL (Cons name (Maybe typ) tailRl) requiredRL (Cons name typ optionalTailRl)
-
-else instance toORecordRlConsRequired ::
-  ( ToORecordRL tailRl requiredTailRl optionalRl
-  ) => ToORecordRL (Cons name typ tailRl) (Cons name typ requiredTailRl) optionalRl
-
-toORecord
- :: forall r required optional
-    . ToORecord r required optional
-    => RowKeys optional
-    => { |r }
-    -> ORecord required optional
-toORecord = toORecordImpl (fromMaybe undefined) (rowKeys (RProxy :: _ optional))
+instance orecordMappingInstance ::
+  ( RowKeys optional
+  , MapMaybe optional maybes
+  , Union required maybes r
+  ) => ORecordMapping required optional r where
+  toORecord = toORecordImpl (fromMaybe undefined) (rowKeys (RProxy :: _ optional))
+  fromORecord = fromORecordImpl Nothing Just (rowKeys (RProxy :: _ optional))
 
 foreign import toORecordImpl :: forall a a' r required optional. (Maybe a -> a') -> Array String -> { |r } -> ORecord required optional
 
@@ -95,16 +78,6 @@ class MapMaybeRL
 
 instance mapMaybeRLNil :: MapMaybeRL Nil Nil
 instance mapMaybeRLCons :: MapMaybeRL tl tl' => MapMaybeRL (Cons k t tl) (Cons k (Maybe t) tl')
-
-fromORecord ::
-  forall required optional maybes r
-  . MapMaybe optional maybes
-  => Union required maybes r
-  => RowKeys optional
-  => ORecord required optional
-  -> { |r }
-fromORecord =
-  fromORecordImpl Nothing Just (rowKeys (RProxy :: _ optional))
 
 foreign import fromORecordImpl :: forall required optional r. (forall a. Maybe a) -> (forall a. a -> Maybe a) -> Array String -> ORecord required optional -> { |r }
 

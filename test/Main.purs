@@ -7,7 +7,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Effect (Effect)
-import ORecord (ORecord, fromORecord, getOptional, getRequired, orecord, setOptional, setRequired)
+import ORecord (ORecord, fromORecord, getOptional, getRequired, orecord, setOptional, setRequired, toORecord)
 import Test.Assert (assert', assertFalse')
 
 type O = ORecord (i :: Int, s :: String) (b :: Boolean, n :: Number)
@@ -22,6 +22,13 @@ main = do
 
   assert' "store optionals directly" $
     unsafeGet "b" sample == true
+
+  assert' "to orecord" $
+    sample == toORecord { i: 10
+                        , s: "foo"
+                        , b: Just true
+                        , n: Nothing
+                        }
 
   assert' "from orecord" $
     fromORecord sample == { i: 10
