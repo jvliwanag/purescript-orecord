@@ -13,6 +13,8 @@ module ORecord
        , getOptional
        , setRequired
        , setOptional
+       -- Utils
+       , unrequire
        -- Helpers
        , class RowKeys
        , _rowKeys
@@ -125,6 +127,16 @@ setOptional sp Nothing r = deleteImpl (reflectSymbol sp) r
 
 foreign import setImpl :: forall a required optional. String -> a -> ORecord required optional -> ORecord required optional
 foreign import deleteImpl :: forall required optional. String -> ORecord required optional -> ORecord required optional
+
+-- Utils
+
+unrequire
+  :: forall required optional required' optional' unrequired
+     . Union optional unrequired optional'
+     => Union required' unrequired required
+     => ORecord required optional
+     -> ORecord required' optional'
+unrequire = unsafeCoerce
 
 -- Helpers
 

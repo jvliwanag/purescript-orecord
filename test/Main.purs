@@ -7,7 +7,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Effect (Effect)
-import ORecord (ORecord, fromORecord, getOptional, getRequired, orecord, setOptional, setRequired, toORecord)
+import ORecord (ORecord, fromORecord, getOptional, getRequired, orecord, setOptional, setRequired, toORecord, unrequire)
 import Test.Assert (assert', assertFalse')
 
 type O = ORecord (i :: Int, s :: String) (b :: Boolean, n :: Number)
@@ -69,6 +69,11 @@ b_ = SProxy
 
 n_ :: SProxy "n"
 n_ = SProxy
+
+-- compile checks
+
+unrequiredSample :: ORecord (i :: Int) (s :: String, b :: Boolean, n :: Number)
+unrequiredSample = unrequire sample
 
 foreign import hasKey :: forall optional required. String -> ORecord optional required -> Boolean
 
