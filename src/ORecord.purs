@@ -52,6 +52,12 @@ instance orecordOrd ::
   ) => Ord (ORecord required optional) where
   compare a a' = compare (fromORecord a :: {|r}) (fromORecord a')
 
+instance orecordShow ::
+  ( ORecordMapping required optional r
+  , Show {|r}
+  ) => Show (ORecord required optional) where
+  show a = "(ORecord " <> show (fromORecord a :: {|r}) <> ")"
+
 class ORecordMapping
       (required :: # Type)
       (optional :: # Type)
