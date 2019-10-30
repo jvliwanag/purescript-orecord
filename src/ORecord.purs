@@ -45,6 +45,13 @@ instance orecordEq ::
   ) => Eq (ORecord required optional) where
   eq a a' = (fromORecord a :: {|r}) == fromORecord a'
 
+instance orecordOrd ::
+  ( ORecordMapping required optional r
+  , Ord {|r}
+  , Eq (ORecord required optional)
+  ) => Ord (ORecord required optional) where
+  compare a a' = compare (fromORecord a :: {|r}) (fromORecord a')
+
 class ORecordMapping
       (required :: # Type)
       (optional :: # Type)
