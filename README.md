@@ -2,65 +2,30 @@
 
 A data type for records with required and optional values.
 
-NOTE: Documentation is WIP
+_Note: Documentations is WIP._
 
-# Example
+# Overview
 
-# Usage for FFI
+A purescript record has a single row type identifying labels required to be present on a javascript object.
+For instance, the type `Record ( i :: Int, s :: String )` only accepts record values having exactly two labels, `i` and `s`
+referring to values of type `Int` and `String` respectively.
 
-A common JavaScript API pattern is defining a function with inputs and outputs as objects having required and optional members.
+ORecord adds another row type to identify an addital set of labels which may or may not be present. A type
+`ORecord ( i :: Int, s :: String ) ( b :: Boolean, n :: Number )` requires `i` and `s` to be present, but may or may not have
+labels `b` and `n`.
 
-Take for example a JavaScript SMS API with the following specifications:
-
-`sendSMS(SMSRequest)`
-
-### Request
-| Key | Description | Type | Required |
-| --- | --- | --- | --- |
-| apiKey | Your API Key | String | Y |
-| from | Name of sender | String | N |
-| to | Number of receipient | String | Y |
-| text | Message  | String | Y |
-| ttl | Duration in seconds the delivery will be attempted | Int | N |
-
-Following the specification, we split up the keys between required and optional and define an `ORecord`.
+In order to create an `ORecord`, we use the `o` which takes in a record:
 
 ```purescript
--- src/SMS.purs
+sample1 :: ORecord ( i :: Int, s :: String ) ( b :: Boolean, n :: Number )
+sample1 = orecord { i: 10, s: "foo" }
 
-type SMSRequest =
-  ORecord ( apiKey :: String
-          , to :: String
-          , text :: String
-          )
-          ( from :: String
-          , ttl :: Int
-          )
+sample2 :: ORecord ( i :: Int, s :: String ) ( b :: Boolean, n :: Number )
+sample2 = orecord { i: 10, s: "foo", b: true }
+
+sample3 :: ORecord ( i :: Int, s :: String ) ( b :: Boolean, n :: Number )
+sample3 = orecord { i: 10, s: "foo", b: true, n: 2.1 }
 ```
 
-We can create an FFI code as follows:
-
-```js
-// src/SMS.js
-var smslib = require('smslib');
-exports.sendSMS = function (request) {
-  function () {
-    return smslib.sendSMS(request);
-  }
-}
-
-```
-
-```purescript
--- src/SMS.purs
-
-...
-
-foreign import sendSMS :: SMSRequest -> Effect Unit
-```
-
-### Response
-| Key | Description | Type | Required |
-| --- | --- | --- | --- |
-| id | Message ID | String | Y |
-| accepted | True if message was accepted | Boolean | Y |
+It is important to note that the implementation of `o` coerces the record input to the proper `ORecord` type. This makes it especially useful when
+working against JS FFI libraries defining record types with optional labels.
